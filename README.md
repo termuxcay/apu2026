@@ -9,7 +9,14 @@ segundo turno presidencial Flavio Bolsonaro (PL/22) x Lula (PT/13).
     go build -o apuracao2026.exe .
     ./apuracao2026.exe
 
-Abra http://127.0.0.1:8081 (ou 8080, padrao; variavel PORT muda a porta).
+Abra http://127.0.0.1:8080 (variavel PORT muda a porta).
+
+## Online (GitHub Pages)
+
+https://termuxcay.github.io/apu2026/ - a pagina roda em modo dual:
+com o servidor Go local ativo, usa /api/results; caso contrario,
+consulta a base oficial do TSE direto do navegador (CORS liberado
+pelo TSE) e normaliza os mesmos campos.
 
 ## Fonte de dados
 
