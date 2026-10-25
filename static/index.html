@@ -381,22 +381,22 @@ function phi(z) {
   return 0.5 * (1 + Math.tanh(0.7978845608 * z * (1 + 0.044715 * z * z)));
 }
 
-function winProbability(lead, sections, sectionsTotal, pendingElectorate) {
-  const done = sections / Math.max(sectionsTotal, 1);
-  if (pendingElectorate <= 0) {
-    if (lead === 0 && done < 1) return 0.5;
-    return lead > 0 ? 1 : (lead < 0 ? 0 : 0.5);
-  }
+function winProbability(lead, votes, pendingValid, done) {
+  if (pendingValid <= 0) return lead > 0 ? 1 : (lead < 0 ? 0 : 0.5);
   if (lead === 0) return 0.5;
-  const sigma = pendingElectorate / Math.sqrt(12);
-  return phi(lead / sigma);
+  const n = Math.max(votes, 1);
+  const shareDiff = lead / n;
+  const sampling = Math.sqrt(1 / n);
+  const regionalBias = 0.030 * Math.pow(1 - done, 1.5);
+  return phi(shareDiff / (sampling + regionalBias));
 }
 
 function card(c, other, d, started, isWinner) {
   const cls = c.name === "LULA" || c.number === "13" ? "lula" : "flavio";
   const lead = c.votes - other.votes;
-  const pending = Math.max(d.electorate - d.turnout, 0);
-  const p = winProbability(lead, d.sections, d.sectionsTotal, pending);
+  const done = d.sectionsTotal ? d.sections / d.sectionsTotal : 0;
+  const pendingValid = pendingValidEstimate(d);
+  const p = winProbability(lead, c.votes + other.votes, pendingValid, done);
   const pPct = (p * 100).toFixed(1).replace(".", ",");
   const pv = p >= 0.995 ? "praticamente definido" : `${pPct}% de chance de vitória*`;
   const ribbon = c.elected
