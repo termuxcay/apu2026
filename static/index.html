@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apuração · 2º Turno · Presidente 2026</title>
+<style>
+:root {
+  --bg: #0a0c10;
+  --panel: #11141b;
+  --panel-edge: #1d2230;
+  --ink: #e8ebf2;
+  --ink-dim: #8a91a3;
+  --ink-faint: #565d70;
+  --acc: #4f8cff;
+  --lula: #ff4d4d;
+  --flavio: #2fa96e;
+  --win: #ffd166;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  min-height: 100vh;
+  padding: 30px clamp(16px, 4vw, 48px) 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+header { margin-bottom: 24px; }
+.kicker {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink-dim); margin-bottom: 8px;
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--acc); animation: pulse 1.6s ease-in-out infinite;
+}
+.dot.stale { background: var(--win); animation: none; }
+.dot.err { background: var(--lula); animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+h1 { font-size: clamp(20px, 3vw, 26px); font-weight: 650; letter-spacing: -0.01em; }
+h1 span { color: var(--ink-dim); font-weight: 400; }
+.meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 10px; font-size: 12.5px; color: var(--ink-dim); }
+.meta b { color: var(--ink); font-weight: 600; }
+
+.bar {
+  height: 14px; border-radius: 7px; overflow: hidden; display: flex;
+  background: var(--panel-edge); margin: 24px 0 28px; position: relative;
+}
+.bar > div { height: 100%; transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+.bar .a { background: linear-gradient(90deg, #1d7a4c, var(--flavio)); }
+.bar .b { background: linear-gradient(90deg, var(--lula), #b32626); }
+
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 680px) { .board { grid-template-columns: 1fr; } }
+.cand-card {
+  background: var(--panel); border: 1px solid var(--panel-edge);
+  border-radius: 14px; padding: 20px 22px 18px; position: relative; overflow: hidden;
+  transition: border-color 0.4s;
+}
+.cand-card.winner { border-color: color-mix(in srgb, var(--win) 55%, var(--panel-edge)); }
+.cand-card .ribbon {
+  position: absolute; top: 14px; right: 16px;
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--win); border: 1px solid color-mix(in srgb, var(--win) 45%, transparent);
+  border-radius: 99px; padding: 3px 10px;
+}
+.cand-card .ribbon.elected { color: #7ee2a8; border-color: color-mix(in srgb, #7ee2a8 45%, transparent); }
+.cand-head { display: flex; align-items: center; gap: 14px; }
+.cand-photo {
+  width: 52px; height: 72px; border-radius: 8px; object-fit: cover;
+  border: 1px solid var(--panel-edge); background: var(--panel-edge);
+  flex-shrink: 0;
+}
+.cand-id { min-width: 0; }
+.cand-card .name { font-size: 15px; font-weight: 650; }
+.cand-card .party { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+.cand-card .pct {
+  font-size: clamp(42px, 6.5vw, 58px); font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.1; margin-top: 8px; font-variant-numeric: tabular-nums;
+}
+.cand-card.flavio .pct { color: var(--flavio); }
+.cand-card.lula .pct { color: var(--lula); }
+.cand-card .votes { font-size: 13px; color: var(--ink-dim); margin-top: 4px; }
+.cand-card .votes b { color: var(--ink); font-weight: 600; }
+
+.winbar { margin-top: 14px; }
+.winbar .winlabel {
+  display: flex; justify-content: space-between; font-size: 10.5px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+}
+.winbar .winlabel b { font-variant-numeric: tabular-nums; }
+.winbar .track { height: 6px; border-radius: 3px; background: var(--panel-edge); overflow: hidden; }
+.winbar .fill { height: 100%; border-radius: 3px; transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+.flavio .winbar .fill { background: var(--flavio); }
+.lula .winbar .fill { background: var(--lula); }
+
+.strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px; margin-top: 14px;
+}
+.kpi {
+  background: var(--panel); border: 1px solid var(--panel-edge);
+  border-radius: 10px; padding: 14px 16px;
+}
+.kpi .label { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.kpi .value { font-size: 19px; font-weight: 650; margin-top: 6px; }
+.kpi .value small { font-size: 12px; color: var(--ink-dim); font-weight: 400; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 30px; }
+@media (max-width: 880px) { .grid2 { grid-template-columns: 1fr; } }
+section h2 {
+  font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-dim); font-weight: 600; margin-bottom: 14px;
+}
+.chart-box {
+  background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 12px;
+  padding: 16px;
+}
+.chart-box svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11.5px; color: var(--ink-dim); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.uf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.uf {
+  background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 8px;
+  padding: 10px 12px 9px; font-size: 11px;
+}
+.uf .uf-top { display: flex; align-items: baseline; gap: 6px; }
+.uf .uf-code { font-weight: 700; font-size: 13px; }
+.uf .uf-pct { color: var(--ink-faint); margin-left: auto; }
+.uf .uf-lead { font-weight: 650; }
+.uf .uf-lead.flavio { color: var(--flavio); }
+.uf .uf-lead.lula { color: var(--lula); }
+.uf .uf-bar { height: 4px; border-radius: 2px; margin-top: 7px; display: flex; overflow: hidden; background: var(--panel-edge); }
+.uf .uf-bar i { display: block; height: 100%; transition: width 0.7s ease; }
+.uf .uf-bar .la { background: var(--flavio); }
+.uf .uf-bar .lb { background: var(--lula); }
+
+footer {
+  margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--panel-edge);
+  font-size: 11.5px; color: var(--ink-faint); line-height: 1.7;
+}
+footer a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
+
+.state-msg {
+  margin: 26px 0; border: 1px dashed var(--panel-edge); border-radius: 12px;
+  padding: 24px; text-align: center; color: var(--ink-dim); font-size: 13.5px; line-height: 1.6;
+  display: none;
+}
+.state-msg.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker"><span class="dot" id="liveDot"></span><span id="liveLabel">ao vivo</span></div>
+    <h1>Apuração · 2º turno <span>· Presidente da República · 25/10/2026</span></h1>
+    <div class="meta">
+      <div>Fonte oficial: <b>TSE · Divulgação de Resultados</b></div>
+      <div>Totalização: <b id="mProgress">—</b></div>
+      <div>Atualizado: <b id="mSync">—</b></div>
+    </div>
+  </header>
+
+  <div class="bar"><div class="a" id="barA" style="width:50%"></div><div class="b" id="barB" style="width:50%"></div></div>
+  <div class="board" id="board"></div>
+
+  <div class="state-msg" id="preMsg">
+    A apuração começa às <b>17h</b> (horário de Brasília), após o encerramento da votação.<br>
+    Este painel consulta a base oficial do TSE a cada 30 segundos e atualiza sozinho assim que os primeiros boletins forem totalizados.
+  </div>
+
+  <div class="strip">
+    <div class="kpi"><div class="label">Seções apuradas</div><div class="value" id="kSections">—</div></div>
+    <div class="kpi"><div class="label">Comparecimento</div><div class="value" id="kTurnout">—</div></div>
+    <div class="kpi"><div class="label">Votos válidos</div><div class="value" id="kValid">—</div></div>
+    <div class="kpi"><div class="label">Nulos</div><div class="value" id="kNull">—</div></div>
+    <div class="kpi"><div class="label">Brancos</div><div class="value" id="kBlank">—</div></div>
+    <div class="kpi"><div class="label">Projecão p/ vencer</div><div class="value" id="kNeed">—</div></div>
+  </div>
+
+  <div class="grid2">
+    <section>
+      <h2>Evolução da disputa (votos válidos)</h2>
+      <div class="chart-box">
+        <svg id="evolSvg" viewBox="0 0 520 260" preserveAspectRatio="none" aria-label="Evolução dos percentuais"></svg>
+        <div class="legend">
+          <span><i style="background:var(--flavio)"></i>Flávio Bolsonaro</span>
+          <span><i style="background:var(--lula)"></i>Lula</span>
+          <span id="evolCount" style="margin-left:auto"></span>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2>Quadro de estados (quem lidera)</h2>
+      <div class="uf-grid" id="ufGrid"></div>
+    </section>
+  </div>
+
+  <footer>
+    Dados: <a href="https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json" target="_blank" rel="noopener">TSE · Resultados Oficiais · Eleição 6258 (2º turno)</a>. Fotos: acervo oficial do TSE.
+    Percentuais de candidatos sobre votos válidos (pvap). Local: servidor Go consulta o TSE a cada 30 s e a página a cada 10 s. No GitHub Pages, a página consulta a base oficial do TSE direto (CORS liberado), a cada 30 s.
+    A probabilidade de vitória é uma <b>estimativa estatística</b> baseada nos votos já apurados e no eleitorado pendente — não é projeção oficial nem pesquisa.
+  </footer>
+</div>
+
+<script>
+const fmt = n => n.toLocaleString("pt-BR");
+const pct = s => parseFloat((s || "0").replace(",", ".")) || 0;
+const barA = document.getElementById("barA"), barB = document.getElementById("barB");
+const board = document.getElementById("board");
+const ufGrid = document.getElementById("ufGrid");
+const dot = document.getElementById("liveDot"), liveLabel = document.getElementById("liveLabel");
+const preMsg = document.getElementById("preMsg");
+const history = [];
+
+const STATE_NAME = {AC:"Acre",AL:"Alagoas",AM:"Amazonas",AP:"Amapá",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MG:"Minas Gerais",MS:"Mato Grosso do Sul",MT:"Mato Grosso",PA:"Pará",PB:"Paraíba",PE:"Pernambuco",PI:"Piauí",PR:"Paraná",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RO:"Rondônia",RR:"Roraima",RS:"Rio Grande do Sul",SC:"Santa Catarina",SE:"Sergipe",SP:"São Paulo",TO:"Tocantins"};
+
+function setState(kind, text) {
+  dot.className = "dot" + (kind ? " " + kind : "");
+  liveLabel.textContent = text;
+}
+
+function photoURL(c) {
+  return c.sqcand ? `https://resultados.tse.jus.br/oficial/ele2026/6258/fotos/br/${c.sqcand}.jpeg` : "";
+}
+
+function phi(z) {
+  return 0.5 * (1 + Math.tanh(0.7978845608 * z * (1 + 0.044715 * z * z)));
+}
+
+function winProbability(lead, sections, sectionsTotal, pendingElectorate) {
+  const done = sections / Math.max(sectionsTotal, 1);
+  if (pendingElectorate <= 0) {
+    if (lead === 0 && done < 1) return 0.5;
+    return lead > 0 ? 1 : (lead < 0 ? 0 : 0.5);
+  }
+  if (lead === 0) return 0.5;
+  const sigma = pendingElectorate / Math.sqrt(12);
+  return phi(lead / sigma);
+}
+
+function card(c, other, d, started, isWinner) {
+  const cls = c.name === "LULA" ? "lula" : "flavio";
+  const lead = c.votes - other.votes;
+  const pending = Math.max(d.electorate - d.turnout, 0);
+  const p = winProbability(lead, d.sections, d.sectionsTotal, pending);
+  const pPct = (p * 100).toFixed(1).replace(".", ",");
+  const pv = p >= 0.995 ? "praticamente definido" : `${pPct}% de chance de vitória*`;
+  const ribbon = c.elected
+    ? '<div class="ribbon elected">eleito</div>'
+    : (isWinner ? '<div class="ribbon">na frente</div>' : "");
+  return `<div class="cand-card ${cls}${isWinner ? " winner" : ""}">
+    ${ribbon}
+    <div class="cand-head">
+      <img class="cand-photo" src="${photoURL(c)}" alt="${c.name}" loading="lazy"
+           onerror="this.style.visibility='hidden'">
+      <div class="cand-id">
+        <div class="name">${c.name}</div>
+        <div class="party">${c.party} · ${c.number}</div>
+      </div>
+    </div>
+    <div class="pct">${(c.share || "0,00").replace("%", "")}%</div>
+    <div class="votes"><b>${fmt(c.votes)}</b> votos${lead > 0 ? ` · <b>+${fmt(lead)}</b> de vantagem` : ""}</div>
+    <div class="winbar">
+      <div class="winlabel"><span>prob. de vitória*</span><b>${pv}</b></div>
+      <div class="track"><div class="fill" style="width:${(p * 100).toFixed(2)}%"></div></div>
+    </div>
+  </div>`;
+}
+
+function renderEvol() {
+  const svg = document.getElementById("evolSvg");
+  const W = 520, H = 260, PADL = 40, PADR = 10, PADT = 12, PADB = 26;
+  document.getElementById("evolCount").textContent = history.length ? `${history.length} leituras` : "";
+  if (history.length < 2) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="var(--ink-faint)" font-size="13" text-anchor="middle" font-family="inherit">aguardando os primeiros números do TSE…</text>`;
+    return;
+  }
+  const n = history.length;
+  const xAt = i => PADL + (W - PADL - PADR) * (i / (n - 1));
+  const yAt = v => PADT + (H - PADT - PADB) * (1 - v / 100);
+  let grid = "";
+  for (const v of [0, 25, 50, 75, 100]) {
+    grid += `<line x1="${PADL}" y1="${yAt(v)}" x2="${W-PADR}" y2="${yAt(v)}" stroke="var(--panel-edge)" stroke-width="1"/>`;
+    grid += `<text x="${PADL-6}" y="${yAt(v)+4}" fill="var(--ink-faint)" font-size="10" text-anchor="end" font-family="inherit">${v}%</text>`;
+  }
+  const pathFor = key => history.map((h, i) => `${i ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(pct(h[key])).toFixed(1)}`).join("");
+  const last = history[n-1];
+  svg.innerHTML = grid
+    + `<path d="${pathFor("flavio")}" fill="none" stroke="var(--flavio)" stroke-width="2.5" stroke-linejoin="round"/>`
+    + `<path d="${pathFor("lula")}" fill="none" stroke="var(--lula)" stroke-width="2.5" stroke-linejoin="round"/>`
+    + `<circle cx="${xAt(n-1)}" cy="${yAt(pct(last.flavio))}" r="4" fill="var(--flavio)"/>`
+    + `<circle cx="${xAt(n-1)}" cy="${yAt(pct(last.lula))}" r="4" fill="var(--lula)"/>`;
+}
+
+function shortName(c) {
+  if (c.number === "13") return "Lula";
+  if (c.number === "22") return "F. Bolsonaro";
+  return c.name;
+}
+
+function renderUFs(ufs, a, b) {
+  if (!ufs.length) { ufGrid.innerHTML = ""; return; }
+  ufGrid.innerHTML = ufs.map(u => {
+    const va = u.votes[a.number] || 0, vb = u.votes[b.number] || 0;
+    const total = va + vb;
+    const pa = total ? va / total * 100 : 0, pb = total ? vb / total * 100 : 0;
+    return `<div class="uf">
+      <div class="uf-top"><span class="uf-code">${u.code} · ${STATE_NAME[u.code] || u.code}</span><span class="uf-pct">${u.pct}%</span></div>
+      <div class="uf-top"><span class="uf-lead ${total ? (va >= vb ? "flavio" : "lula") : ""}">${total ? shortName(va >= vb ? a : b) : "—"} lidera</span><span class="uf-lead ${total ? (va >= vb ? "flavio" : "lula") : ""}" style="margin-left:auto">${total ? pa.toFixed(1).replace(".", ",") + "%" : "—"}</span></div>
+      <div class="uf-bar"><i class="la" style="width:${pa.toFixed(1)}%"></i><i class="lb" style="width:${pb.toFixed(1)}%"></i></div>
+    </div>`;
+  }).join("");
+}
+
+function pendingValidEstimate(d) {
+  if (d.final || d.electorate <= d.turnout) return 0;
+  const validRate = d.turnout > 0 ? d.validVotes / d.turnout : 0.79;
+  return (d.electorate - d.turnout) * validRate;
+}
+
+function votesToTie(a, b, d) {
+  const lead = a.votes - b.votes;
+  if (lead <= 0 || d.final) return 0;
+  return Math.max(Math.ceil(pendingValidEstimate(d) / 2 - lead / 2), 0);
+}
+
+function render(d) {
+  if (!d.ok || !d.candidates.length) { setState("err", "aguardando TSE"); return; }
+  preMsg.classList.remove("show");
+
+  const [a, b] = d.candidates;
+  const pa = pct(a.share), pb = pct(b.share);
+  const total = pa + pb;
+  barA.style.width = (total ? pa / total * 100 : 50).toFixed(2) + "%";
+  barB.style.width = (total ? pb / total * 100 : 50).toFixed(2) + "%";
+
+  const started = d.sections > 0;
+  const winnerCard = a.elected ? 0 : (b.elected ? 1 : (started ? 0 : -1));
+  board.innerHTML = card(a, b, d, started, winnerCard === 0) + card(b, a, d, started, winnerCard === 1);
+
+  if (started && history.length === 0) {
+    for (let i = 0; i < 1; i++) history.push({flavio: a.share, lula: b.share});
+  }
+  const lastH = history[history.length - 1];
+  if (!lastH || lastH.flavio !== a.share || lastH.lula !== b.share || d.final) {
+    history.push({flavio: a.share, lula: b.share});
+    if (history.length > 400) history.shift();
+  }
+  renderEvol();
+  renderUFs(d.ufs || [], a, b);
+
+  document.getElementById("mProgress").textContent = (d.progress || "0,00") + "%";
+  document.getElementById("mSync").textContent = new Date(d.lastSync).toLocaleTimeString("pt-BR");
+  document.getElementById("kSections").innerHTML = `${fmt(d.sections)} <small>/ ${fmt(d.sectionsTotal)}</small>`;
+  document.getElementById("kTurnout").innerHTML = `${fmt(d.turnout)} <small>de ${fmt(d.electorate)}</small>`;
+  document.getElementById("kValid").textContent = fmt(d.validVotes);
+  document.getElementById("kNull").textContent = fmt(d.nullVotes);
+  document.getElementById("kBlank").textContent = fmt(d.blankVotes);
+  document.getElementById("kNeed").textContent = d.final || !started
+    ? "—"
+    : fmt(votesToTie(a, b, d)) + " p/ Lula empatar";
+
+  if (d.winnerNumber) setState("", `eleito: ${a.elected ? a.name : b.name}`);
+  else if (d.final) setState("", "totalização final");
+  else if (started) setState("", "ao vivo");
+  else setState("stale", "aguardando apuração · urnas abertas");
+}
+
+function pendingEstimate(d) {
+  return Math.max(d.electorate - d.turnout, 0);
+}
+
+let source = null;
+
+async function detectSource() {
+  try {
+    const r = await fetch("/api/health", { cache: "no-store" });
+    if (r.ok) { source = "local"; return; }
+  } catch (e) {}
+  source = "tse";
+}
+
+function ti(x) {
+  const n = parseInt(x, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+function normalizeTSE(f) {
+  const seen = {}, cands = [];
+  for (const cargo of f.carg || []) {
+    if (cargo.cd !== "1") continue;
+    for (const agr of cargo.agr || []) {
+      for (const party of agr.par || []) {
+        for (const c of party.cand || []) {
+          if (seen[c.n]) continue;
+          seen[c.n] = true;
+          cands.push({ name: c.nmu, number: c.n, party: party.sg, votes: ti(c.vap), share: c.pvap, elected: c.e === "s", sqcand: c.sqcand || "" });
+        }
+      }
+    }
+  }
+  cands.sort((x, y) => y.votes - x.votes);
+  const winner = (cands.find(c => c.elected) || {}).number || "";
+  return {
+    ok: cands.length >= 2,
+    generatedAt: (f.dg || "") + " " + (f.hg || ""),
+    totalizedAt: ((f.dt || "") + " " + (f.ht || "")).trim(),
+    progress: f.s ? f.s.pst : "0,00",
+    sections: f.s ? ti(f.s.st) : 0,
+    sectionsTotal: f.s ? ti(f.s.ts) : 0,
+    electorate: f.e ? ti(f.e.te) : 0,
+    turnout: f.e ? ti(f.e.c) : 0,
+    validVotes: f.v ? ti(f.v.vv) : 0,
+    nullVotes: f.v ? ti(f.v.vn) : 0,
+    blankVotes: f.v ? ti(f.v.vb) : 0,
+    final: f.tf === "s" || winner !== "" || f.md === "e",
+    winnerNumber: winner,
+    candidates: cands,
+    ufs: [],
+    lastSync: new Date().toISOString(),
+    source: "TSE (direto)"
+  };
+}
+
+const TSE_BASE = "https://resultados.tse.jus.br/oficial/ele2026/6258/dados";
+const TSE_UFS = ["ac","al","am","ap","ba","ce","df","es","go","ma","mg","ms","mt","pa","pb","pe","pi","pr","rj","rn","ro","rr","rs","sc","se","sp","to"];
+
+async function fetchLocal() {
+  const r = await fetch("/api/results");
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function fetchTSE() {
+  const [brRes, abRes] = await Promise.all([
+    fetch(`${TSE_BASE}/br/br-c0001-e006258-u.json`),
+    fetch(`${TSE_BASE}/br/br-e006258-ab.json`)
+  ]);
+  if (!brRes.ok) throw new Error("tse " + brRes.status);
+  const d = normalizeTSE(await brRes.json());
+  if (abRes.ok) {
+    const ab = await abRes.json();
+    for (const a of ab.abr || []) {
+      if (a.tpabr !== "uf") continue;
+      d.ufs.push({ code: a.cdabr.toUpperCase(), sections: ti(a.s.st), sectionsTotal: ti(a.s.ts), pct: a.s.pst, votes: {}, shares: {} });
+    }
+  }
+  const results = await Promise.allSettled(TSE_UFS.map(uf =>
+    fetch(`${TSE_BASE}/${uf}/${uf}-c0001-e006258-u.json`).then(r => r.ok ? r.json() : null)
+  ));
+  const byCode = {};
+  for (const u of d.ufs) byCode[u.code] = u;
+  for (const res of results) {
+    if (res.status !== "fulfilled" || !res.value) continue;
+    const f = res.value;
+    const code = (f.cdabr || "").toUpperCase();
+    const target = byCode[code] || { code, sections: 0, sectionsTotal: 0, pct: "0,00", votes: {}, shares: {} };
+    target.sections = ti(f.s.st);
+    target.sectionsTotal = ti(f.s.ts);
+    target.pct = f.s.pst;
+    for (const cargo of f.carg || []) {
+      if (cargo.cd !== "1") continue;
+      for (const agr of cargo.agr || []) for (const party of agr.par || []) for (const c of party.cand || []) {
+        target.votes[c.n] = ti(c.vap);
+        target.shares[c.n] = c.pvap;
+      }
+    }
+    if (!byCode[code]) { byCode[code] = target; d.ufs.push(target); }
+  }
+  d.ufs.sort((x, y) => x.code.localeCompare(y.code));
+  return d;
+}
+
+async function tick() {
+  if (!source) await detectSource();
+  try {
+    render(source === "local" ? await fetchLocal() : await fetchTSE());
+  } catch (e) {
+    setState("err", source === "local" ? "servidor local indisponível" : "TSE indisponível");
+  }
+}
+(async function loop() {
+  await tick();
+  setTimeout(loop, source === "local" ? 10000 : 30000);
+})();
+</script>
+</body>
+</html>

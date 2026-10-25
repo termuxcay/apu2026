@@ -1,0 +1,5 @@
+*.exe
+server.log
+server2.log
+serve_check.html
+*.tar.gz
