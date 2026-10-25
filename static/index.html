@@ -150,6 +150,81 @@ footer a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dott
   display: none;
 }
 .state-msg.show { display: block; }
+
+.ticker { margin-top: 26px; overflow: hidden; border: 1px solid var(--panel-edge); border-radius: 10px; background: var(--panel); }
+.ticker .ticker-head { padding: 9px 14px 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.ticker .lane { display: flex; gap: 0; width: max-content; animation: scrollX 75s linear infinite; }
+.ticker:hover .lane { animation-play-state: paused; }
+@keyframes scrollX { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker .news-item { display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 26px; font-size: 12.5px; white-space: nowrap; border-right: 1px solid var(--panel-edge); }
+.ticker .news-item a { color: var(--ink-dim); text-decoration: none; }
+.ticker .news-item a:hover { color: var(--ink); }
+.ticker .news-item .src { color: var(--acc); font-size: 11px; font-weight: 650; }
+.ticker .news-item .ago { color: var(--ink-faint); font-size: 10.5px; }
+.ticker .empty { padding: 10px 14px; font-size: 12px; color: var(--ink-faint); }
+
+.panel-header { display: flex; align-items: center; gap: 10px; }
+.sound-btn {
+  margin-left: auto; background: var(--panel); border: 1px solid var(--panel-edge);
+  color: var(--ink-dim); border-radius: 99px; padding: 6px 14px; font-size: 11px;
+  cursor: pointer; font-family: inherit; letter-spacing: 0.06em;
+}
+.sound-btn.on { color: var(--acc); border-color: color-mix(in srgb, var(--acc) 45%, transparent); }
+.sound-btn:hover { color: var(--ink); }
+
+.confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+.confetti-layer i {
+  position: absolute; top: -4vh; width: 9px; height: 14px; border-radius: 2px;
+  animation: confetti-fall var(--dur, 3.2s) linear var(--delay, 0s) forwards;
+}
+.confetti-layer i.round { border-radius: 50%; }
+.confetti-layer i.pulse {
+  width: 14px; height: 14px; animation-name: confetti-pulse; animation-duration: var(--dur, 2.6s);
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-6vh) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(108vh) rotate(720deg) scale(0.9); opacity: 0.6; }
+}
+@keyframes confetti-pulse {
+  0% { transform: translateY(-6vh) scale(1); opacity: 1; }
+  50% { transform: translateY(40vh) scale(1.9); opacity: 0.95; }
+  100% { transform: translateY(108vh) scale(0.8); opacity: 0; }
+}
+
+.proclaimed {
+  position: fixed; inset: 0; z-index: 60; display: none;
+  align-items: center; justify-content: center; flex-direction: column; gap: 8px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(7px); text-align: center; padding: 20px;
+}
+.proclaimed.show { display: flex; animation: proclaim-in 0.8s cubic-bezier(0.2, 1, 0.3, 1); }
+@keyframes proclaim-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.proclaimed .pro-kicker { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--win); }
+.proclaimed .pro-name {
+  font-size: clamp(30px, 6.5vw, 58px); font-weight: 800; letter-spacing: -0.02em;
+  color: var(--flavio); text-shadow: 0 0 34px color-mix(in srgb, var(--flavio) 45%, transparent);
+}
+.proclaimed .pro-sub { font-size: 13px; color: var(--ink-dim); }
+.proclaimed .pro-dismiss {
+  margin-top: 18px; background: transparent; border: 1px solid var(--panel-edge);
+  color: var(--ink-dim); border-radius: 99px; padding: 9px 22px; font-size: 12px;
+  cursor: pointer; font-family: inherit;
+}
+.proclaimed .pro-dismiss:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+.details-box { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 12px; padding: 18px 20px; margin-top: 22px; }
+.details-box summary { cursor: pointer; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 600; list-style: none; }
+.details-box summary::before { content: "+ "; color: var(--acc); }
+.details-box[open] summary::before { content: "− "; }
+.details-box .how { margin-top: 14px; font-size: 13px; line-height: 1.75; color: var(--ink-dim); }
+.details-box .how b { color: var(--ink); font-weight: 650; }
+.details-box .how .formula {
+  display: block; margin: 12px 0; padding: 12px 16px; background: var(--bg);
+  border: 1px solid var(--panel-edge); border-radius: 8px;
+  font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--ink); white-space: pre; overflow-x: auto;
+}
+.details-box .how ul { margin: 10px 0 0 18px; }
+.details-box .how li { margin-top: 5px; }
 </style>
 </head>
 <body>
@@ -179,6 +254,7 @@ footer a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dott
     <div class="kpi"><div class="label">Nulos</div><div class="value" id="kNull">—</div></div>
     <div class="kpi"><div class="label">Brancos</div><div class="value" id="kBlank">—</div></div>
     <div class="kpi"><div class="label">Projecão p/ vencer</div><div class="value" id="kNeed">—</div></div>
+    <div class="kpi"><div class="label">Abstenções</div><div class="value" id="kAbst">—</div></div>
   </div>
 
   <div class="grid2">
@@ -199,12 +275,38 @@ footer a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dott
     </section>
   </div>
 
+  <section style="margin-top:30px">
+    <h2>Comparecimento ao longo da apuração</h2>
+    <div class="chart-box">
+      <svg id="turnSvg" viewBox="0 0 520 220" preserveAspectRatio="none" aria-label="Comparecimento"></svg>
+      <div class="legend">
+        <span><i style="background:var(--acc)"></i>% do eleitorado que votou</span>
+        <span id="turnCount" style="margin-left:auto"></span>
+      </div>
+    </div>
+  </section>
+
+
   <footer>
     Dados: <a href="https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json" target="_blank" rel="noopener">TSE · Resultados Oficiais · Eleição 6258 (2º turno)</a>. Fotos: acervo oficial do TSE.
     Percentuais de candidatos sobre votos válidos (pvap). Local: servidor Go consulta o TSE a cada 30 s e a página a cada 10 s. No GitHub Pages, a página consulta a base oficial do TSE direto (CORS liberado), a cada 30 s.
     A probabilidade de vitória é uma <b>estimativa estatística</b> baseada nos votos já apurados e no eleitorado pendente — não é projeção oficial nem pesquisa.
   </footer>
 </div>
+
+<div class="ticker" id="ticker" style="display:none">
+  <div class="ticker-head">Últimas notícias · apuração</div>
+  <div class="lane" id="tickerLane"></div>
+</div>
+
+<div class="confetti-layer" id="confettiLayer"></div>
+<div class="proclaimed" id="proclaimed">
+  <div class="pro-kicker">resultado totalizado</div>
+  <div class="pro-name" id="proName">—</div>
+  <div class="pro-sub" id="proSub">—</div>
+  <button class="pro-dismiss" id="proDismiss">fechar</button>
+</div>
+
 
 <script>
 const fmt = n => n.toLocaleString("pt-BR");
@@ -215,6 +317,54 @@ const ufGrid = document.getElementById("ufGrid");
 const dot = document.getElementById("liveDot"), liveLabel = document.getElementById("liveLabel");
 const preMsg = document.getElementById("preMsg");
 const history = [];
+const turnHistory = [];
+
+function ago(dateStr) {
+  const t = Date.parse(dateStr);
+  if (isNaN(t)) return "";
+  const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+  return m <= 0 ? "agora" : `há ${m} min`;
+}
+
+async function loadTicker() {
+  let items = null;
+  try {
+    const r = await fetch(API_NEWS, { cache: "no-store" });
+    if (r.ok) items = (await r.json()).items;
+  } catch (e) {}
+  const box = document.getElementById("ticker");
+  if (!items || !items.length) { box.style.display = "none"; return; }
+  const html = items.map(it =>
+    `<div class="news-item"><span class="src">${it.source || "news"}</span><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a><span class="ago">${ago(it.date)}</span></div>`
+  ).join("");
+  document.getElementById("tickerLane").innerHTML = html + html;
+  box.style.display = "block";
+}
+
+let victoryShown = false;
+function celebrate(d) {
+  const layer = document.getElementById("confettiLayer");
+  const pro = document.getElementById("proclaimed");
+  const [a, b] = d.candidates;
+  const w = d.candidates.find(c => c.number === d.winnerNumber);
+  if (!w) return;
+  if (!victoryShown) {
+    victoryShown = true;
+    const bits = [];
+    for (let i = 0; i < 160; i++) {
+      const cls = Math.random() < 0.35 ? (Math.random() < 0.5 ? ' class="round"' : ' class="pulse"') : "";
+      const col = w.number === "13" ? ["#ff4d4d", "#b32626", "#ffd166"] : ["#2fa96e", "#1d7a4c", "#ffd166"];
+      bits.push(`<i${cls} style="background:${col[i % col.length]};left:${(Math.random() * 100).toFixed(2)}vw;--dur:${(2.6 + Math.random() * 2.6).toFixed(2)}s;--delay:${(Math.random() * 2.2).toFixed(2)}s"></i>`);
+    }
+    layer.innerHTML = bits.join("");
+    document.getElementById("proName").textContent = w.name;
+    document.getElementById("proSub").textContent = `${w.party} · ${w.number} · ${(w.share || "").replace("%", "")}% dos votos válidos`;
+    pro.classList.add("show");
+  }
+}
+document.getElementById("proDismiss").addEventListener("click", () =>
+  document.getElementById("proclaimed").classList.remove("show"));
+
 
 const STATE_NAME = {AC:"Acre",AL:"Alagoas",AM:"Amazonas",AP:"Amapá",BA:"Bahia",CE:"Ceará",DF:"Distrito Federal",ES:"Espírito Santo",GO:"Goiás",MA:"Maranhão",MG:"Minas Gerais",MS:"Mato Grosso do Sul",MT:"Mato Grosso",PA:"Pará",PB:"Paraíba",PE:"Pernambuco",PI:"Piauí",PR:"Paraná",RJ:"Rio de Janeiro",RN:"Rio Grande do Norte",RO:"Rondônia",RR:"Roraima",RS:"Rio Grande do Sul",SC:"Santa Catarina",SE:"Sergipe",SP:"São Paulo",TO:"Tocantins"};
 
@@ -368,13 +518,52 @@ function render(d) {
   else if (d.final) setState("", "totalização final");
   else if (started) setState("", "ao vivo");
   else setState("stale", "aguardando apuração · urnas abertas");
+
+  if (d.winnerNumber) celebrate(d);
+
+  const tPct = d.electorate ? (d.turnout / d.electorate * 100) : 0;
+  const lastT = turnHistory[turnHistory.length - 1];
+  if (started && (!lastT || lastT.v !== tPct || d.final)) {
+    turnHistory.push({ t: Date.parse(d.lastSync) || Date.now(), v: tPct });
+    if (turnHistory.length > 400) turnHistory.shift();
+    renderTurnout();
+  }
+  document.getElementById("kAbst").textContent = d.electorate ? fmt(d.electorate - d.turnout) : "—";
 }
+
 
 function pendingEstimate(d) {
   return Math.max(d.electorate - d.turnout, 0);
 }
 
+function renderTurnout() {
+  const svg = document.getElementById("turnSvg");
+  const W = 520, H = 220, PADL = 40, PADR = 10, PADT = 12, PADB = 26;
+  document.getElementById("turnCount").textContent = turnHistory.length ? `${turnHistory.length} leituras` : "";
+  if (turnHistory.length < 2) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="var(--ink-faint)" font-size="13" text-anchor="middle" font-family="inherit">comparecimento aparecerá aqui…</text>`;
+    return;
+  }
+  const n = turnHistory.length;
+  const xAt = i => PADL + (W - PADL - PADR) * (i / (n - 1));
+  const yAt = v => PADT + (H - PADT - PADB) * (1 - v / 100);
+  let grid = "";
+  for (const v of [0, 25, 50, 75, 100]) {
+    grid += `<line x1="${PADL}" y1="${yAt(v)}" x2="${W-PADR}" y2="${yAt(v)}" stroke="var(--panel-edge)" stroke-width="1"/>`;
+    grid += `<text x="${PADL-6}" y="${yAt(v)+4}" fill="var(--ink-faint)" font-size="10" text-anchor="end" font-family="inherit">${v}%</text>`;
+  }
+  const path = turnHistory.map((h, i) => `${i ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(h.v).toFixed(1)}`).join("");
+  const area = `${path} L${xAt(n-1).toFixed(1)},${yAt(0)} L${xAt(0).toFixed(1)},${yAt(0)} Z`;
+  const last = turnHistory[n-1];
+  svg.innerHTML = grid
+    + `<path d="${area}" fill="color-mix(in srgb, var(--acc) 14%, transparent)"/>`
+    + `<path d="${path}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round"/>`
+    + `<circle cx="${xAt(n-1)}" cy="${yAt(last.v)}" r="4" fill="var(--acc)"/>`
+    + `<text x="${xAt(n-1)-6}" y="${yAt(last.v)-8}" fill="var(--acc)" font-size="11" text-anchor="end" font-family="inherit">${last.v.toFixed(2).replace(".", ",")}%</text>`;
+}
+
 let source = null;
+
 
 async function detectSource() {
   try {
@@ -428,6 +617,8 @@ function normalizeTSE(f) {
 
 const TSE_BASE = "https://resultados.tse.jus.br/oficial/ele2026/6258/dados";
 const TSE_UFS = ["ac","al","am","ap","ba","ce","df","es","go","ma","mg","ms","mt","pa","pb","pe","pi","pr","rj","rn","ro","rr","rs","sc","se","sp","to"];
+const API_NEWS = "api/news";
+
 
 async function fetchLocal() {
   const r = await fetch("/api/results");
@@ -487,6 +678,9 @@ async function tick() {
   await tick();
   setTimeout(loop, source === "local" ? 10000 : 30000);
 })();
+loadTicker();
+setInterval(loadTicker, 180000);
+
 </script>
 </body>
 </html>

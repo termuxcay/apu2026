@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -361,6 +362,7 @@ func poller() {
 
 type apiSnapshot struct {
 	OK          bool      `json:"ok"`
+	IDG         string    `json:"idg"`
 	GeneratedAt string    `json:"generatedAt"`
 	TotalizedAt string    `json:"totalizedAt"`
 	Progress    string    `json:"progress"`
@@ -392,6 +394,7 @@ func handleResults(w http.ResponseWriter, r *http.Request) {
 
 	out := apiSnapshot{OK: ready, Source: "TSE"}
 	if ready {
+		out.IDG = s.GeneratedID
 		out.GeneratedAt = s.GeneratedAt
 		out.TotalizedAt = s.TotalizedAt
 		out.Progress = s.Progress
@@ -439,12 +442,96 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{"ready": ready, "error": errMsg, "ufFiles": ufCount, "time": time.Now().Format(time.RFC3339)})
 }
 
+type newsItem struct {
+	Title  string `json:"title"`
+	Source string `json:"source"`
+	Date   string `json:"date"`
+	Link   string `json:"link"`
+}
+
+var newsCache = struct {
+	sync.RWMutex
+	items   []newsItem
+	fetched time.Time
+}{}
+
+var (
+	newsItemRe   = regexp.MustCompile(`(?s)<item>(.*?)</item>`)
+	newsTitleRe  = regexp.MustCompile(`(?s)<title>(.*?)</title>`)
+	newsDateRe   = regexp.MustCompile(`(?s)<pubDate>(.*?)</pubDate>`)
+	newsSrcRe    = regexp.MustCompile(`(?s)<source[^>]*>(.*?)</source>`)
+	newsLinkRe   = regexp.MustCompile(`(?s)<link>(.*?)</link>`)
+	newsEntities = strings.NewReplacer("&amp;", "&", "&lt;", "<", "&gt;", ">", "&quot;", "\"", "&#39;", "'", "&apos;", "'", "<![CDATA[", "", "]]>", "")
+)
+
+func newsField(xml string, re *regexp.Regexp) string {
+	if m := re.FindStringSubmatch(xml); m != nil {
+		return strings.TrimSpace(newsEntities.Replace(m[1]))
+	}
+	return ""
+}
+
+func fetchNews() []newsItem {
+	url := "https://news.google.com/rss/search?q=%22segundo+turno%22+presidenci%C3%A1veis+apura%C3%A7%C3%A3o&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return nil
+	}
+	out := []newsItem{}
+	for _, m := range newsItemRe.FindAllStringSubmatch(string(body), 12) {
+		out = append(out, newsItem{
+			Title:  newsField(m[1], newsTitleRe),
+			Date:   newsField(m[1], newsDateRe),
+			Source: newsField(m[1], newsSrcRe),
+			Link:   newsField(m[1], newsLinkRe),
+		})
+	}
+	return out
+}
+
+func handleNews(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	newsCache.RLock()
+	fresh := time.Since(newsCache.fetched) < 5*time.Minute
+	items := newsCache.items
+	newsCache.RUnlock()
+	if !fresh {
+		fetched := fetchNews()
+		if len(fetched) > 0 {
+			newsCache.Lock()
+			newsCache.items = fetched
+			newsCache.fetched = time.Now()
+			newsCache.Unlock()
+			items = fetched
+		}
+	}
+	if items == nil {
+		items = []newsItem{}
+	}
+	json.NewEncoder(w).Encode(map[string]any{"ok": len(items) > 0, "items": items})
+}
+
 func main() {
 	go poller()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/results", handleResults)
 	mux.HandleFunc("/api/health", handleHealth)
+	mux.HandleFunc("/api/news", handleNews)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
