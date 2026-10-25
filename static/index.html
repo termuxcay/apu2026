@@ -393,7 +393,7 @@ function winProbability(lead, sections, sectionsTotal, pendingElectorate) {
 }
 
 function card(c, other, d, started, isWinner) {
-  const cls = c.name === "LULA" ? "lula" : "flavio";
+  const cls = c.name === "LULA" || c.number === "13" ? "lula" : "flavio";
   const lead = c.votes - other.votes;
   const pending = Math.max(d.electorate - d.turnout, 0);
   const p = winProbability(lead, d.sections, d.sectionsTotal, pending);
@@ -424,7 +424,8 @@ function card(c, other, d, started, isWinner) {
 function renderEvol() {
   const svg = document.getElementById("evolSvg");
   const W = 520, H = 260, PADL = 40, PADR = 10, PADT = 12, PADB = 26;
-  document.getElementById("evolCount").textContent = history.length ? `${history.length} leituras` : "";
+  document.getElementById("evolCount").textContent = history.length
+    ? `${history.length} ${history.length === 1 ? "leitura" : "leituras"}` : "";
   if (history.length < 2) {
     svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="var(--ink-faint)" font-size="13" text-anchor="middle" font-family="inherit">aguardando os primeiros números do TSE…</text>`;
     return;
@@ -457,11 +458,16 @@ function renderUFs(ufs, a, b) {
   ufGrid.innerHTML = ufs.map(u => {
     const va = u.votes[a.number] || 0, vb = u.votes[b.number] || 0;
     const total = va + vb;
+    const aLula = a.number === "13";
     const pa = total ? va / total * 100 : 0, pb = total ? vb / total * 100 : 0;
+    const leadPct = total ? (va >= vb ? pa : pb) : 0;
+    const leadCls = total ? (va >= vb === aLula ? "lula" : "flavio") : "";
+    const leadName = total ? shortName(va >= vb ? a : b) : "—";
+    const pctTxt = total ? leadPct.toFixed(1).replace(".", ",") + "%" : "—";
     return `<div class="uf">
       <div class="uf-top"><span class="uf-code">${u.code} · ${STATE_NAME[u.code] || u.code}</span><span class="uf-pct">${u.pct}%</span></div>
-      <div class="uf-top"><span class="uf-lead ${total ? (va >= vb ? "flavio" : "lula") : ""}">${total ? shortName(va >= vb ? a : b) : "—"} lidera</span><span class="uf-lead ${total ? (va >= vb ? "flavio" : "lula") : ""}" style="margin-left:auto">${total ? pa.toFixed(1).replace(".", ",") + "%" : "—"}</span></div>
-      <div class="uf-bar"><i class="la" style="width:${pa.toFixed(1)}%"></i><i class="lb" style="width:${pb.toFixed(1)}%"></i></div>
+      <div class="uf-top"><span class="uf-lead ${leadCls}">${leadName}${total ? " lidera" : ""}</span><span class="uf-pct">${pctTxt}</span></div>
+      <div class="uf-bar"><i class="${aLula ? "lb" : "la"}" style="width:${pa.toFixed(1)}%"></i><i class="${aLula ? "la" : "lb"}" style="width:${pb.toFixed(1)}%"></i></div>
     </div>`;
   }).join("");
 }
@@ -487,6 +493,8 @@ function render(d) {
   const total = pa + pb;
   barA.style.width = (total ? pa / total * 100 : 50).toFixed(2) + "%";
   barB.style.width = (total ? pb / total * 100 : 50).toFixed(2) + "%";
+  barA.className = a.number === "13" ? "b" : "a";
+  barB.className = b.number === "13" ? "b" : "a";
 
   const started = d.sections > 0;
   const winnerCard = a.elected ? 0 : (b.elected ? 1 : (started ? 0 : -1));
@@ -512,7 +520,9 @@ function render(d) {
   document.getElementById("kBlank").textContent = fmt(d.blankVotes);
   document.getElementById("kNeed").textContent = d.final || !started
     ? "—"
-    : fmt(votesToTie(a, b, d)) + " p/ Lula empatar";
+    : fmt(votesToTie(a, b, d)) + (a.votes > b.votes
+        ? ` p/ ${shortName(b)} empatar`
+        : ` p/ ${shortName(a)} empatar`);
 
   if (d.winnerNumber) setState("", `eleito: ${a.elected ? a.name : b.name}`);
   else if (d.final) setState("", "totalização final");
@@ -539,7 +549,8 @@ function pendingEstimate(d) {
 function renderTurnout() {
   const svg = document.getElementById("turnSvg");
   const W = 520, H = 220, PADL = 40, PADR = 10, PADT = 12, PADB = 26;
-  document.getElementById("turnCount").textContent = turnHistory.length ? `${turnHistory.length} leituras` : "";
+  document.getElementById("turnCount").textContent = turnHistory.length
+    ? `${turnHistory.length} ${turnHistory.length === 1 ? "leitura" : "leituras"}` : "";
   if (turnHistory.length < 2) {
     svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="var(--ink-faint)" font-size="13" text-anchor="middle" font-family="inherit">comparecimento aparecerá aqui…</text>`;
     return;
